@@ -1,7 +1,8 @@
 # Rscript tests/run_tests.R
 # All fixtures are synthetic; this runner makes no network/API requests.
 test_files <- file.path("tests", c("test_static_reader.R", "test_realtime_integration.R",
-                                   "test_scope_validation.R"))
+                                   "test_scope_validation.R", "test_bus_scope.R",
+                                   "test_validation_diagnostics.R", "test_acquisition.R"))
 run_isolated_test <- function(path) {
   test_environment <- new.env(parent = globalenv())
   # Nested source() calls also stay local, so helpers cannot leak between tests.

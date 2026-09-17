@@ -16,5 +16,14 @@ tfnsw_feeds <- list(
     "/v2/gtfs/realtime/sydneytrains", "train_t1_t9", raw_subdir = ""),
   metro = tfnsw_feed("metro", "metro", "/v2/gtfs/schedule/metro", "/v2/gtfs/realtime/metro"),
   ferry = tfnsw_feed("ferry", "sydneyferries", "/v1/gtfs/schedule/ferries/sydneyferries",
-    "/v1/gtfs/realtime/ferries/sydneyferries")
+    "/v1/gtfs/realtime/ferries/sydneyferries"),
+  bus = tfnsw_feed("bus", "buses", "/v1/gtfs/schedule/buses",
+    "/v1/gtfs/realtime/buses", "sydney_bus")
 )
+# Static-only catalogs identify contingency rows sharing the /buses realtime feed.
+# Their data is used for exclusion/provenance, never appended to project rows.
+tfnsw_feeds$bus$scope_catalogs <- lapply(c("PCBC", "ReplacementBus"), function(subfeed) {
+  tfnsw_feed("bus", subfeed, paste0("/v1/gtfs/schedule/buses/", subfeed),
+             "/v1/gtfs/realtime/buses")
+})
+tfnsw_feeds$bus$excluded_operator_names <- "Newcastle Transport"

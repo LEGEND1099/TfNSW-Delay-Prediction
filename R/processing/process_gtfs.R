@@ -11,6 +11,7 @@ scope_gtfs <- function(x, config) {
     x$scope_status[is.na(x$route_short_name)] <- "EXCLUDE_MISSING_ROUTE_METADATA"
     x$scope_status[x$is_empty_train] <- "EXCLUDE_EMPTY_TRAIN"
   }
+  if (config$scope == "sydney_bus") x <- classify_bus_scope(x, config)
   x$keep_for_project <- x$scope_status == "KEEP"
   x$snapshot_time_sydney <- format(x$snapshot_time_utc, "%Y-%m-%d %H:%M:%S", tz = config$timezone)
   list(audit = x, processed = x[x$keep_for_project, ])

@@ -3,6 +3,7 @@ run_feed_once <- function(config, offline = FALSE, reuse_realtime = FALSE) {
   realtime_path <- acquire_trip_updates(config, reuse = reuse_realtime, offline = offline)
   cat("Parsing", config$mode, config$subfeed, "from saved files\n")
   static <- read_static_gtfs(static_dir)
+  if (config$scope == "sydney_bus") config$bus_scope_catalogs <- read_bus_scope_catalogs(config, offline)
   parsed <- read_trip_updates(realtime_path)
   integrated <- integrate_gtfs(parsed$trip_updates_df, static,
     parsed$snapshot_time_utc, parsed$feed_time_utc, config$timezone)
@@ -24,7 +25,13 @@ run_feed_once <- function(config, offline = FALSE, reuse_realtime = FALSE) {
   summary$snapshot_time_utc <- rep(parsed$snapshot_time_utc, nrow(summary))
   summary$feed_time_utc <- rep(parsed$feed_time_utc, nrow(summary))
   saveRDS(summary, paste0(prefix, "_trip_summary.rds"))
-  saveRDS(parsed$trip_updates_df, paste0(prefix, "_stop_updates.rds"))
+  stops <- parsed$trip_updates_df
+  stops$mode <- rep(config$mode, nrow(stops))
+  stops$source_subfeed <- rep(config$subfeed, nrow(stops))
+  stops$source_feed <- rep(config$realtime_endpoint, nrow(stops))
+  stops$snapshot_time_utc <- rep(parsed$snapshot_time_utc, nrow(stops))
+  stops$feed_time_utc <- rep(parsed$feed_time_utc, nrow(stops))
+  saveRDS(stops, paste0(prefix, "_stop_updates.rds"))
   saveRDS(scoped$audit, paste0(prefix, "_scope_audit.rds"))
   if (static$parsing_problem_count > 0L) saveRDS(static$parsing_problems, paste0(prefix, "_parsing_problems.rds"))
   processed_path <- file.path(config$processed_dir, paste0(config$subfeed, "_snapshot_", tag, ".rds"))
@@ -33,6 +40,10 @@ run_feed_once <- function(config, offline = FALSE, reuse_realtime = FALSE) {
   validation$static_directory <- static_dir
   validation$raw_realtime_path <- realtime_path
   validation$processed_path <- processed_path
+  validation$scope_exclusion_counts <- relationship_counts(scoped$audit$scope_status[!scoped$audit$keep_for_project])
+  validation$scope_excluded_rows <- sum(!scoped$audit$keep_for_project)
+  validation$scope_catalog_directories <- paste(vapply(config$bus_scope_catalogs,
+    `[[`, character(1), "directory"), collapse = ";")
   readr::write_csv(validation, file.path("logs/validation", paste0(config$subfeed, "_", tag, ".csv")))
   print(validation[, c("mode", "source_subfeed", "stop_level_rows", "processed_rows",
     "static_trip_match_rate", "static_stop_match_rate", "static_trip_stop_match_rate")], width = Inf)

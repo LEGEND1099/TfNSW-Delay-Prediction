@@ -64,17 +64,23 @@ flatten_gtfs_feed <- function(feed) {
   empty_summary <- trip_summary_row(empty_entity, 0L)[0, ]
   summaries <- list(empty_summary)
   updates <- list(dplyr::bind_cols(empty_summary, stop_update_row(NULL, 0L)[0, ]))
-  for (i in seq_along(feed$entity)) {
-    entity <- feed$entity[[i]]
+  # Materialize repeated Protobuf fields once, especially for large bus feeds.
+  entities <- feed$entity
+  for (i in seq_along(entities)) {
+    entity <- entities[[i]]
     if (!entity$has("trip_update")) next
     summary <- trip_summary_row(entity, i)
     summaries[[length(summaries) + 1L]] <- summary
     n <- summary$number_of_stop_updates
     if (n == 0L) next
+    stop_updates <- entity$trip_update$stop_time_update
     rows <- dplyr::bind_rows(lapply(seq_len(n), function(j) {
-      stop_update_row(entity$trip_update$stop_time_update[[j]], j)
+      stop_update_row(stop_updates[[j]], j)
     }))
     updates[[length(updates) + 1L]] <- dplyr::bind_cols(summary[rep(1L, n), ], rows)
+    if (length(entities) >= 1000L && i %% 1000L == 0L) {
+      message("Parsed ", i, "/", length(entities), " realtime entities.")
+    }
   }
   list(trip_summary_df = dplyr::bind_rows(summaries), trip_updates_df = dplyr::bind_rows(updates))
 }
