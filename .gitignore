@@ -41,3 +41,8 @@ _freeze/
 # ===============================
 Thumbs.db
 .DS_Store
+
+# ===============================
+# Generated processed snapshots
+# ===============================
+data/processed/**/*.csv
