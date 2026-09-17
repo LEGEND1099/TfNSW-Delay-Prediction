@@ -1,0 +1,43 @@
+# ===============================
+# SECRETS - NEVER COMMIT
+# ===============================
+.Renviron
+.env
+Keys.txt
+
+# ===============================
+# R SESSION / LOCAL FILES
+# ===============================
+.Rhistory
+.RData
+.Ruserdata
+.Rproj.user/
+
+# ===============================
+# RENV LOCAL PACKAGE LIBRARY
+# ===============================
+renv/library/
+renv/staging/
+
+# ===============================
+# LARGE / GENERATED DATA
+# ===============================
+data/raw/
+data/interim/
+logs/
+
+# GTFS-Realtime binary payloads
+*.pb
+*.pbf
+
+# ===============================
+# QUARTO CACHE
+# ===============================
+.quarto/
+_freeze/
+
+# ===============================
+# OS FILES
+# ===============================
+Thumbs.db
+.DS_Store
