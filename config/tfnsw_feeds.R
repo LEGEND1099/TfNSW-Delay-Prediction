@@ -13,5 +13,8 @@ tfnsw_feed <- function(mode, subfeed, static_endpoint, realtime_endpoint,
 }
 tfnsw_feeds <- list(
   train = tfnsw_feed("train", "sydneytrains", "/v1/gtfs/schedule/sydneytrains",
-    "/v2/gtfs/realtime/sydneytrains", "train_t1_t9", raw_subdir = "")
+    "/v2/gtfs/realtime/sydneytrains", "train_t1_t9", raw_subdir = ""),
+  metro = tfnsw_feed("metro", "metro", "/v2/gtfs/schedule/metro", "/v2/gtfs/realtime/metro"),
+  ferry = tfnsw_feed("ferry", "sydneyferries", "/v1/gtfs/schedule/ferries/sydneyferries",
+    "/v1/gtfs/realtime/ferries/sydneyferries")
 )
