@@ -46,3 +46,5 @@ Thumbs.db
 # Generated processed snapshots
 # ===============================
 data/processed/**/*.csv
+data/processed/**/*.rds
+data/processed/**/*.RData

@@ -5,7 +5,8 @@ check_git_safety <- function(staged = TRUE) {
   if (any(grepl(forbidden, paths, ignore.case = TRUE))) stop("Unsafe generated or secret path is versioned/staged.")
   key <- Sys.getenv("TFNSW_API_KEY")
   for (path in paths) {
-    content <- system2("git", c("show", shQuote(paste0(if (staged) ":" else "HEAD:", path))), stdout = TRUE)
+    content <- system2("git", c("show", shQuote(paste0(":", path))), stdout = TRUE)
+    if (!is.null(attr(content, "status")) && attr(content, "status") != 0L) stop("Could not inspect Git content.")
     if (nzchar(key) && any(grepl(key, content, fixed = TRUE))) stop("Secret detected in Git content; content withheld.")
     if (any(grepl("^-----BEGIN [A-Z ]*PRIVATE KEY-----$|gh[pousr]_[A-Za-z0-9]{30,}|sk-[A-Za-z0-9]{30,}", content))) {
       stop("Credential pattern detected; content withheld.")
