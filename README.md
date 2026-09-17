@@ -17,10 +17,10 @@ Construct an integrated dataset from Transport for NSW static GTFS, GTFS-Realtim
 ## Data pipeline
 
 Static GTFS + GTFS-Realtime + Alerts + Weather
-? Mode-specific processing
-? Integrated dataset
-? Exploratory Data Analysis
-? Classification modelling
+-> Mode-specific processing
+-> Integrated dataset
+-> Exploratory Data Analysis
+-> Classification modelling
 
 ## Project structure
 
