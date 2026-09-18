@@ -18,7 +18,13 @@ tfnsw_feeds <- list(
   ferry = tfnsw_feed("ferry", "sydneyferries", "/v1/gtfs/schedule/ferries/sydneyferries",
     "/v1/gtfs/realtime/ferries/sydneyferries"),
   bus = tfnsw_feed("bus", "buses", "/v1/gtfs/schedule/buses",
-    "/v1/gtfs/realtime/buses", "sydney_bus")
+    "/v1/gtfs/realtime/buses", "sydney_bus"),
+  innerwest = tfnsw_feed("light_rail", "innerwest", "/v1/gtfs/schedule/lightrail/innerwest",
+    "/v2/gtfs/realtime/lightrail/innerwest"),
+  cbdandsoutheast = tfnsw_feed("light_rail", "cbdandsoutheast", "/v1/gtfs/schedule/lightrail/cbdandsoutheast",
+    "/v1/gtfs/realtime/lightrail/cbdandsoutheast"),
+  parramatta = tfnsw_feed("light_rail", "parramatta", "/v1/gtfs/schedule/lightrail/parramatta",
+    "/v1/gtfs/realtime/lightrail/parramatta")
 )
 # Static-only catalogs identify contingency rows sharing the /buses realtime feed.
 # Their data is used for exclusion/provenance, never appended to project rows.
