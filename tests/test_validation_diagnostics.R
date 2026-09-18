@@ -35,6 +35,7 @@ static <- list(
 parsed <- list(trip_updates_df = rt, trip_summary_df = summary,
                snapshot_time_utc = utc_epoch(1789680200), feed_time_utc = utc_epoch(1789680000))
 integrated <- integrate_gtfs(rt, static, parsed$snapshot_time_utc, parsed$feed_time_utc)
+integrated$source_operator <- c("Transit;\"North\"\nDivision", NA_character_, " \t ")
 processed <- integrated
 processed$mode <- "synthetic"
 processed$keep_for_project <- TRUE
@@ -60,7 +61,44 @@ stopifnot(report$trip_update_count == 4L, report$zero_stop_trip_update_count == 
           report$observed_route_ids == observed_identifiers(c("R;quoted", "R2", "R3")),
           report$observed_route_short_names == observed_identifiers(c("01", "two\nlines")),
           !grepl("\n", report$observed_route_short_names, fixed = TRUE),
-          report$processed_route_ids == report$observed_route_ids)
+          report$processed_route_ids == report$observed_route_ids,
+          report$source_operator == observed_identifiers(integrated$source_operator[1]),
+          report$missing_source_operator_rows == 2L,
+          report$processed_source_operator == report$source_operator,
+          report$processed_missing_source_operator_rows == 2L)
+
+# Missing attribution remains explicit, including for rows outside the processed
+# population. Validation must neither fill operators nor remove unmatched rows.
+processed_subset <- processed[1:2, ]
+subset_report <- validate_gtfs(parsed, static, integrated, processed_subset, config)
+stopifnot(subset_report$missing_source_operator_rows == 2L,
+          subset_report$processed_missing_source_operator_rows == 1L,
+          subset_report$unmatched_rows == 2L,
+          identical(integrated$source_operator, c("Transit;\"North\"\nDivision", NA_character_, " \t ")),
+          is.na(processed_subset$source_operator[2]))
+blank_operator <- integrated
+blank_operator$source_operator[3] <- ""
+blank_report <- validate_gtfs(parsed, static, blank_operator, processed, config)
+stopifnot(blank_report$missing_source_operator_rows == 2L)
+
+# Callers without an attribution column report all rows as unattributed; empty
+# snapshots correctly have no observed operators and zero missing rows.
+without_operators <- integrated
+without_operators$source_operator <- NULL
+processed_without_operators <- processed
+processed_without_operators$source_operator <- NULL
+missing_report <- validate_gtfs(parsed, static, without_operators, processed_without_operators, config)
+stopifnot(missing_report$source_operator == "", missing_report$processed_source_operator == "",
+          missing_report$missing_source_operator_rows == nrow(integrated),
+          missing_report$processed_missing_source_operator_rows == nrow(processed))
+empty_parsed <- parsed
+empty_parsed$trip_updates_df <- rt[0, ]
+empty_parsed$trip_summary_df <- summary[0, ]
+empty_integrated <- integrate_gtfs(rt[0, ], static, parsed$snapshot_time_utc, parsed$feed_time_utc)
+empty_report <- validate_gtfs(empty_parsed, static, empty_integrated, processed[0, ], config)
+stopifnot(empty_report$source_operator == "", empty_report$processed_source_operator == "",
+          empty_report$missing_source_operator_rows == 0L,
+          empty_report$processed_missing_source_operator_rows == 0L)
 
 # Summaries with delimiter-bearing identifiers survive a CSV write/read intact.
 fixture_dir <- file.path("logs", "tests", "validation_diagnostics")
@@ -71,6 +109,7 @@ roundtrip <- readr::read_csv(csv_path, col_types = readr::cols(.default = readr:
                            show_col_types = FALSE)
 summary_fields <- c("observed_realtime_route_ids", "observed_route_ids", "observed_route_short_names",
                     "processed_route_ids", "processed_route_short_names",
+                    "source_operator", "processed_source_operator",
                     "unmatched_trip_schedule_relationship_counts")
 for (field in summary_fields) stopifnot(identical(roundtrip[[field]], report[[field]]))
 stopifnot(identical(observed_identifiers(c(NA_character_, NA_character_)), ""),

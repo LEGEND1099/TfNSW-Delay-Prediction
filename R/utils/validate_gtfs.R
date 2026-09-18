@@ -27,7 +27,21 @@ validate_gtfs <- function(parsed, static, integrated, processed, config) {
   dup <- attr(integrated, "duplicate_diagnostics")
   summary_trip_lookup <- unique_lookup(ts, static$trips, "trip_id")
   unmatched <- !integrated$static_trip_stop_match
+  # Attribution can remain unresolved for unmatched updates. Report it without
+  # dropping rows or inventing an operator from the feed's expected population.
+  operators <- if ("source_operator" %in% names(integrated)) {
+    as.character(integrated$source_operator)
+  } else rep(NA_character_, nrow(integrated))
+  processed_operators <- if ("source_operator" %in% names(processed)) {
+    as.character(processed$source_operator)
+  } else rep(NA_character_, nrow(processed))
+  missing_operator <- is.na(operators) | !nzchar(trimws(operators))
+  processed_missing_operator <- is.na(processed_operators) | !nzchar(trimws(processed_operators))
   tibble::tibble(mode = config$mode, source_subfeed = config$subfeed,
+    source_operator = observed_identifiers(operators[!missing_operator]),
+    missing_source_operator_rows = sum(missing_operator),
+    processed_source_operator = observed_identifiers(processed_operators[!processed_missing_operator]),
+    processed_missing_source_operator_rows = sum(processed_missing_operator),
     snapshot_time_utc = parsed$snapshot_time_utc, feed_time_utc = parsed$feed_time_utc,
     trip_update_count = nrow(ts), zero_stop_trip_update_count = sum(ts$number_of_stop_updates == 0L),
     stop_level_rows = nrow(rt), unique_trips = dplyr::n_distinct(rt$trip_id, na.rm = TRUE),
